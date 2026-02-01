@@ -514,7 +514,11 @@ const App: React.FC = () => {
                               </div>
                           </div>
                       </div>
-                      <div className="mt-6 text-center text-[11px] text-neutral-600">Jilit Mostafa | +212 668 09 02 85</div>
+                      <div className="mt-6 text-center text-[10px] text-neutral-600 leading-relaxed font-semibold uppercase tracking-wide">
+                          Royaume du Maroc <br/>
+                          Direction de la Cartographie <br/>
+                          Plateforme Nationale de l'Information Géospatiale
+                      </div>
                   </div>
                </div>
           </div>
@@ -663,6 +667,29 @@ const App: React.FC = () => {
                               {layers.length === 0 && <div className="text-[10px] text-neutral-400 italic py-2">Aucun fichier chargé.</div>}
                           </div>
                         </div>
+                    </div>
+
+                    <div className="mt-8 border-t border-neutral-200 pt-6 text-center pb-6">
+                       <div className="text-[10px] text-neutral-700 font-bold mb-4 leading-relaxed uppercase tracking-widest">
+                           Agence Nationale de la Conservation Foncière,<br/>
+                           du Cadastre et de la Cartographie (ANCFCC)<br/>
+                           Royaume du Maroc
+                       </div>
+                       
+                       <div className="flex justify-center gap-5 text-lg mb-5">
+                           <a href="#" className="text-blue-800 hover:scale-110 transition-transform"><i className="fas fa-landmark"></i></a>
+                           <a href="#" className="text-blue-600 hover:scale-110 transition-transform"><i className="fas fa-envelope"></i></a>
+                           <a href="#" className="text-blue-900 hover:scale-110 transition-transform"><i className="fab fa-linkedin"></i></a>
+                       </div>
+
+                       <div className="text-[9px] text-neutral-400 font-medium leading-relaxed">
+                           Système d'Information Géographique National<br/>
+                           Direction de la Cartographie et de la Photogrammétrie<br/>
+                           © 2026 Tous droits réservés à l'État Marocain
+                       </div>
+                       <div className="mt-4 flex justify-center">
+                           <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj9eIul_VMdvnyDZGj8fRCDeWCSfK0mIYjYGYXDrCg5GI09syk3U6OMO7jlUZV10DYdpoG2Fyf7O7xcckf99GynWdKAQMmlS_st1s1Cumn-Ov-3fYw8M87_H_234Q0HvkZaHjhEUVefckQ/s0-rw/Flag_of_Morocco.gif" alt="Maroc" className="h-5 w-auto shadow-sm" />
+                       </div>
                     </div>
                 </div>
               </div>
