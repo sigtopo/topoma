@@ -28,7 +28,7 @@ interface ExportResult {
 interface LayerInfo {
     id: string;
     name: string;
-    type: 'KML' | 'SHP' | 'DXF' | 'GeoJSON';
+    type: 'KML' | 'SHP' | 'DXF' | 'GeoJSON' | 'XLS';
 }
 
 interface ManualFeatureInfo {
@@ -114,7 +114,7 @@ const App: React.FC = () => {
   const [measureUnit, setMeasureUnit] = useState<string>('m');
   const [showMobileMeasureMenu, setShowMobileMeasureMenu] = useState(false); 
 
-  const [tocOpen, setTocOpen] = useState(true); 
+  const [tocOpen, setTocOpen] = useState(false); 
   const [toolboxOpen, setToolboxOpen] = useState(false); 
   const [showGoToPanel, setShowGoToPanel] = useState(false); 
   const [showExcelPanel, setShowExcelPanel] = useState(false); 
@@ -300,15 +300,25 @@ const App: React.FC = () => {
                     if (!isNaN(rawX) && !isNaN(rawY)) {
                         const wgs84 = projectFromZone(rawX, rawY, selectedZone);
                         if (wgs84) {
-                            validPoints.push({ x: wgs84[0], y: wgs84[1], label: labelKey ? String(row[labelKey]) : undefined });
+                            validPoints.push({ 
+                                ...row, 
+                                _x: wgs84[0], 
+                                _y: wgs84[1], 
+                                label: labelKey ? String(row[labelKey]) : undefined 
+                            });
                         }
                     }
                 }
             });
             if (validPoints.length > 0) {
-                mapComponentRef.current?.loadExcelPoints(validPoints);
+                const layerId = `excel_${Date.now()}`;
+                const newLayer: LayerInfo = { id: layerId, name: selectedExcelFile.name, type: 'XLS' };
+                setLayers(prev => [...prev, newLayer]);
+                setSelectedLayerId(layerId);
+                mapComponentRef.current?.loadExcelPoints(layerId, validPoints);
                 setSelectedExcelFile(null);
                 setShowExcelPanel(false);
+                setToolboxOpen(true);
             } else { alert("Aucun point valide trouvé."); }
         } catch (err) { alert("Erreur lors du traitement."); }
     };
@@ -320,7 +330,7 @@ const App: React.FC = () => {
     const y = parseCoordinateValue(manualY);
     if (isNaN(x) || isNaN(y)) { alert("Coordonnées invalides."); return; }
     const wgs84 = projectFromZone(x, y, selectedZone); 
-    if (!wgs84) { alert("Hors zone ou erreur de projection."); return; }
+    if (!wgs84) { alert("Hors zone أو erreur de projection."); return; }
     const label = `pt ${pointCounter.toString().padStart(2, '0')}`;
     mapComponentRef.current?.addManualPoint(wgs84[0], wgs84[1], label);
     setPointCounter(prev => prev + 1);
@@ -466,7 +476,9 @@ const App: React.FC = () => {
                       </div>
                   )}
                </div>
-               <button onClick={() => setTocOpen(!tocOpen)} className={`hidden md:flex h-8 px-3 items-center gap-2 rounded border ml-1 ${tocOpen ? 'bg-neutral-300 border-neutral-400' : 'hover:bg-neutral-200'}`}><i className="fas fa-list"></i> <span className="text-xs font-bold">Couches</span></button>
+               <button onClick={() => setTocOpen(!tocOpen)} className={`flex h-8 px-3 items-center gap-2 rounded border ml-1 ${tocOpen ? 'bg-neutral-300 border-neutral-400' : 'bg-white hover:bg-neutral-200'}`}>
+                  <i className="fas fa-layer-group text-blue-600"></i> <span className="text-xs font-bold hidden sm:inline">Couches</span>
+               </button>
                <button onClick={() => setMapType(prev => prev === 'satellite' ? 'hybrid' : 'satellite')} className="md:hidden h-8 w-8 flex items-center justify-center rounded border bg-white shadow-sm ml-1"><i className={`fas ${mapType === 'satellite' ? 'fa-globe-americas' : 'fa-map'}`}></i></button>
           </div>
       </div>
@@ -605,43 +617,46 @@ const App: React.FC = () => {
               )}
           </div>
 
-          {/* RIGHT: TOC */}
-          <div className={`${tocOpen ? 'w-64 md:w-72 translate-x-0' : 'w-0 translate-x-full opacity-0'} hidden md:flex transition-all duration-300 bg-white border-l border-neutral-300 flex-col shrink-0 overflow-hidden absolute right-0 md:static z-20 h-full shadow-lg md:shadow-none order-last`}>
-              <div className="bg-neutral-100 p-2 border-b font-bold text-xs text-neutral-700 flex justify-between items-center">
-                  <span>Couches</span>
-                  <div className="flex gap-1.5">
-                      <button onClick={() => handleFileClick(kmlInputRef)} title="KML" className="text-blue-500 hover:text-blue-700"><i className="fas fa-globe"></i></button>
-                      <button onClick={() => handleFileClick(shpInputRef)} title="SHP" className="text-green-500 hover:text-green-700"><i className="fas fa-shapes"></i></button>
-                      <button onClick={() => handleFileClick(geojsonInputRef)} title="JSON" className="text-teal-500 hover:text-teal-700"><i className="fas fa-file-code"></i></button>
-                      <button onClick={() => handleFileClick(dxfInputRef)} title="DXF" className="text-purple-500 hover:text-purple-700"><i className="fas fa-pencil-ruler"></i></button>
+          {/* RIGHT: TOC (Couches) */}
+          <div className={`${tocOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-300 bg-white border-l border-neutral-300 flex flex-col w-72 md:w-72 fixed md:static right-0 top-10 md:top-0 h-[calc(100vh-40px)] md:h-full z-[40] shadow-2xl md:shadow-none order-last overflow-hidden`}>
+              <div className="bg-neutral-100 p-2 border-b font-bold text-xs text-neutral-700 flex justify-between items-center shrink-0">
+                  <span className="flex items-center gap-1.5"><i className="fas fa-layer-group text-blue-600"></i> Couches</span>
+                  <div className="flex gap-2">
+                      <div className="flex gap-1">
+                        <button onClick={() => handleFileClick(kmlInputRef)} title="KML" className="text-blue-500 hover:text-blue-700"><i className="fas fa-globe"></i></button>
+                        <button onClick={() => handleFileClick(shpInputRef)} title="SHP" className="text-green-500 hover:text-green-700"><i className="fas fa-shapes"></i></button>
+                        <button onClick={() => handleFileClick(geojsonInputRef)} title="JSON" className="text-teal-500 hover:text-teal-700"><i className="fas fa-file-code"></i></button>
+                        <button onClick={() => handleFileClick(dxfInputRef)} title="DXF" className="text-purple-500 hover:text-purple-700"><i className="fas fa-pencil-ruler"></i></button>
+                      </div>
+                      <button onClick={() => setTocOpen(false)} className="md:hidden text-neutral-400"><i className="fas fa-times"></i></button>
                   </div>
               </div>
               <div className="flex-grow overflow-y-auto p-2">
-                  <div className="text-xs select-none space-y-3">
+                  <div className="text-xs select-none space-y-4">
                       <div>
-                        <div className="flex items-center gap-1 mb-1 font-bold text-neutral-800"><i className="fas fa-draw-polygon text-blue-600"></i> Dessins</div>
+                        <div className="flex items-center gap-1 mb-1.5 font-bold text-neutral-800"><i className="fas fa-draw-polygon text-blue-500"></i> Dessins Manuels</div>
                         <div className="ml-4 border-l border-neutral-200 pl-2">
-                            <div className="flex items-center justify-between group">
-                                <span className={`cursor-pointer truncate ${selectedLayerId === 'manual' ? 'font-bold text-blue-700' : ''}`} onClick={() => handleLayerSelect('manual')}>Manuel (Tout)</span>
-                                <button onClick={() => openAttributeTable('manual')} className="hidden group-hover:block text-blue-500 hover:scale-110 transition-transform"><i className="fas fa-table"></i></button>
+                            <div className="flex items-center justify-between py-1 group">
+                                <span className={`cursor-pointer truncate ${selectedLayerId === 'manual' ? 'font-bold text-blue-700 underline' : 'hover:text-blue-600'}`} onClick={() => handleLayerSelect('manual')}>Tous les dessins</span>
+                                <button onClick={() => openAttributeTable('manual')} title="Table d'attributs" className="text-blue-500 hover:scale-110"><i className="fas fa-table"></i></button>
                             </div>
                         </div>
                       </div>
                       <div>
-                        <div className="flex items-center gap-1 mb-1 font-bold text-neutral-800"><i className="fas fa-layer-group text-yellow-600"></i> Fichiers</div>
-                        <div className="ml-4 border-l border-neutral-200 pl-2 space-y-1.5">
+                        <div className="flex items-center gap-1 mb-1.5 font-bold text-neutral-800"><i className="fas fa-file-import text-yellow-600"></i> Fichiers Importés</div>
+                        <div className="ml-4 border-l border-neutral-200 pl-2 space-y-2">
                             {layers.map((layer) => (
-                                <div key={layer.id} className="flex items-center justify-between group gap-2">
-                                    <span className={`truncate cursor-pointer hover:text-blue-600 transition-colors ${selectedLayerId === layer.id ? 'font-bold text-blue-700' : ''}`} onClick={() => handleLayerSelect(layer.id)} title={layer.name}>
+                                <div key={layer.id} className={`flex items-center justify-between py-1 group border-b border-neutral-50 last:border-0 ${selectedLayerId === layer.id ? 'bg-blue-50/50 -ml-2 pl-2 rounded-l' : ''}`}>
+                                    <span className={`truncate cursor-pointer flex-grow ${selectedLayerId === layer.id ? 'font-bold text-blue-700' : 'text-neutral-600 hover:text-blue-600 transition-colors'}`} onClick={() => handleLayerSelect(layer.id)} title={layer.name}>
                                         {layer.name}
                                     </span>
-                                    <div className="hidden group-hover:flex gap-2 shrink-0">
-                                        <button onClick={() => openLabelPicker(layer)} title="Gérer les étiquettes" className="text-orange-500 hover:text-orange-700"><i className="fas fa-tag"></i></button>
-                                        <button onClick={() => openAttributeTable(layer)} title="Table d'attributs" className="text-blue-500 hover:text-blue-700"><i className="fas fa-table"></i></button>
+                                    <div className="flex gap-2.5 shrink-0 ml-2">
+                                        <button onClick={() => openLabelPicker(layer)} title="Étiquettes" className="text-orange-500 hover:text-orange-700 transition-transform hover:scale-110"><i className="fas fa-tag"></i></button>
+                                        <button onClick={() => openAttributeTable(layer)} title="Données" className="text-blue-500 hover:text-blue-700 transition-transform hover:scale-110"><i className="fas fa-table"></i></button>
                                     </div>
                                 </div>
                             ))}
-                            {layers.length === 0 && <div className="text-[10px] text-neutral-400 italic">Aucun fichier importé.</div>}
+                            {layers.length === 0 && <div className="text-[10px] text-neutral-400 italic py-2">Aucun fichier chargé.</div>}
                         </div>
                       </div>
                   </div>

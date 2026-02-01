@@ -60,7 +60,7 @@ export interface MapComponentRef {
   loadShapefile: (file: File, layerId: string) => void;
   loadDXF: (file: File, zoneCode: string, layerId: string) => void;
   loadGeoJSON: (file: File, layerId: string) => void;
-  loadExcelPoints: (points: Array<{x: number, y: number, label?: string}>) => void;
+  loadExcelPoints: (layerId: string, points: any[]) => void;
   addManualPoint: (x: number, y: number, label: string) => void;
   setDrawTool: (type: 'Rectangle' | 'Polygon' | 'Point' | 'Line' | 'Edit' | 'Delete' | null) => void;
   setMeasureTool: (type: 'MeasureLength' | 'MeasureArea', unit: string) => void;
@@ -247,7 +247,10 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
             else if (geom instanceof LineString) { rest.Length = getLength(geom).toFixed(2) + " m"; }
             rest._featureId = f.getId() || `${f.get('type') || 'feat'}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             if (!f.getId()) f.setId(rest._featureId);
-            return rest;
+            const cleanProps: any = {};
+            Object.entries(rest).forEach(([k, v]) => { if (k.indexOf('_') !== 0 && typeof v !== 'object') cleanProps[k] = v; });
+            cleanProps._featureId = rest._featureId;
+            return cleanProps;
         });
     },
     getLayerAvailableFields: (layerId) => {
@@ -255,7 +258,7 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
         if (features.length === 0) return [];
         const props = features[0].getProperties();
         const blacklist = ['geometry', 'layerId', '_featureId'];
-        return Object.keys(props).filter(k => !blacklist.includes(k));
+        return Object.keys(props).filter(k => !blacklist.includes(k) && k.indexOf('_') !== 0);
     },
     setLayerLabelField: (layerId, fieldName) => {
         layerLabelFieldsRef.current[layerId] = fieldName;
@@ -355,15 +358,20 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
         if (features.length > 0) { let extent = features[0].getGeometry()!.getExtent(); features.forEach(f => { const e = f.getGeometry()!.getExtent(); extent[0]=Math.min(extent[0],e[0]); extent[1]=Math.min(extent[1],e[1]); extent[2]=Math.max(extent[2],e[2]); extent[3]=Math.max(extent[3],e[3]); }); calculateExtentAndNotify(features, extent); }
       }; r.readAsText(file);
     },
-    loadExcelPoints: (points) => {
-        pointsSourceRef.current.clear();
+    loadExcelPoints: (layerId, points) => {
         const features = points.map((pt, idx) => {
-            const f = new Feature({ geometry: new Point(fromLonLat([pt.x, pt.y])), label: pt.label || `P${idx + 1}` });
-            f.setId(`excel_${Date.now()}_${idx}`);
+            const { _x, _y, ...attrs } = pt;
+            const f = new Feature({ geometry: new Point(fromLonLat([_x, _y])), ...attrs });
+            f.set('layerId', layerId);
+            f.setId(`${layerId}_${idx}`);
             return f;
         });
-        pointsSourceRef.current.addFeatures(features);
-        if (features.length > 0) mapRef.current?.getView().fit(pointsSourceRef.current.getExtent(), { padding: [100, 100, 100, 100] });
+        kmlSourceRef.current.addFeatures(features);
+        if (features.length > 0) {
+            const extent = kmlSourceRef.current.getExtent();
+            mapRef.current?.getView().fit(extent, { padding: [100, 100, 100, 100], duration: 800 });
+            calculateExtentAndNotify(features, extent, layerId);
+        }
     },
     addManualPoint: (x, y, label) => {
         const feature = new Feature({ geometry: new Point(fromLonLat([x, y])), label: label });
@@ -404,7 +412,7 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
     },
     clearAll: () => { sourceRef.current.clear(); kmlSourceRef.current.clear(); pointsSourceRef.current.clear(); measureSourceRef.current.clear(); activeMeasurementsRef.current = []; overlayRef.current?.setPosition(undefined); notifyManualFeatures(); layerLabelFieldsRef.current = {}; },
     undo: () => { const f = sourceRef.current.getFeatures(); if (f.length > 0) sourceRef.current.removeFeature(f[f.length-1]); notifyManualFeatures(); },
-    deleteSelectedFeature: () => { const s = selectInteractionRef.current?.getFeatures(); if (s) { s.forEach(f => { if (sourceRef.current.hasFeature(f)) sourceRef.current.removeFeature(f); if (pointsSourceRef.current.hasFeature(f)) pointsSourceRef.current.removeFeature(f); }); s.clear(); notifyManualFeatures(); } },
+    deleteSelectedFeature: () => { const s = selectInteractionRef.current?.getFeatures(); if (s) { s.forEach(f => { if (sourceRef.current.hasFeature(f)) sourceRef.current.removeFeature(f); if (pointsSourceRef.current.hasFeature(f)) pointsSourceRef.current.removeFeature(f); if (kmlSourceRef.current.hasFeature(f)) kmlSourceRef.current.removeFeature(f); }); s.clear(); notifyManualFeatures(); } },
     getMapCanvas: async (targetScale, layerId) => {
       if (!mapRef.current) return null;
       let expFeats = layerId === 'manual' ? sourceRef.current.getFeatures() : kmlSourceRef.current.getFeatures().filter(f => f.get('layerId') === layerId);
