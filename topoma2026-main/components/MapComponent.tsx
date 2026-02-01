@@ -91,7 +91,6 @@ const getBasemapSource = (id: string) => {
         case 'google_hybrid': return new XYZ({ url: 'https://mt{0-3}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', maxZoom: 22, crossOrigin: 'anonymous' });
         case 'google_roads': return new XYZ({ url: 'https://mt{0-3}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', maxZoom: 22, crossOrigin: 'anonymous' });
         case 'google_terrain': return new XYZ({ url: 'https://mt{0-3}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', maxZoom: 22, crossOrigin: 'anonymous' });
-        case 'google_hybrid_alt': return new XYZ({ url: 'https://mt{0-3}.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', maxZoom: 22, crossOrigin: 'anonymous' });
         case 'osm_standard': return new XYZ({ url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', maxZoom: 19, crossOrigin: 'anonymous' });
         case 'osm_hot': return new XYZ({ url: 'https://{a-c}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', maxZoom: 19, crossOrigin: 'anonymous' });
         case 'esri_sat': return new XYZ({ url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', maxZoom: 19, crossOrigin: 'anonymous' });
@@ -491,16 +490,73 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
     deleteSelectedFeature: () => { const s = selectInteractionRef.current?.getFeatures(); if (s) { s.forEach(f => { if (sourceRef.current.hasFeature(f)) sourceRef.current.removeFeature(f); if (pointsSourceRef.current.hasFeature(f)) pointsSourceRef.current.removeFeature(f); if (kmlSourceRef.current.hasFeature(f)) kmlSourceRef.current.removeFeature(f); }); s.clear(); notifyManualFeatures(); } },
     getMapCanvas: async (targetScale, layerId) => {
       if (!mapRef.current) return null;
+      
+      // Identify target area
       let expFeats = layerId === 'manual' ? sourceRef.current.getFeatures() : kmlSourceRef.current.getFeatures().filter(f => f.get('layerId') === layerId);
       if (expFeats.length === 0 && layerId !== 'manual') { const f = sourceRef.current.getFeatureById(layerId!); if (f) expFeats = [f]; }
       if (expFeats.length === 0) return null;
-      let extent = expFeats[0].getGeometry()!.getExtent();
-      expFeats.forEach(f => { const e = f.getGeometry()!.getExtent(); extent[0]=Math.min(extent[0],e[0]); extent[1]=Math.min(extent[1],e[1]); extent[2]=Math.max(extent[2],e[2]); extent[3]=Math.max(extent[3],e[3]); });
-      const view = mapRef.current.getView(); const res = targetScale ? getResolutionFromScale(targetScale, toLonLat([(extent[0]+extent[2])/2,(extent[1]+extent[3])/2])[1]) : view.getResolution()!;
-      const w = Math.ceil((extent[2]-extent[0])/res); const h = Math.ceil((extent[3]-extent[1])/res);
+
+      const extent = expFeats.reduce((ext, f) => {
+          const e = f.getGeometry()!.getExtent();
+          return [Math.min(ext[0], e[0]), Math.min(ext[1], e[1]), Math.max(ext[2], e[2]), Math.max(ext[3], e[3])];
+      }, [Infinity, Infinity, -Infinity, -Infinity]);
+
+      const view = mapRef.current.getView(); 
+      const center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+      const res = targetScale ? getResolutionFromScale(targetScale, toLonLat(center)[1]) : view.getResolution()!;
+      
+      const width = Math.ceil((extent[2] - extent[0]) / res); 
+      const height = Math.ceil((extent[3] - extent[1]) / res);
+      
       const originalSize = mapRef.current.getSize();
-      mapRef.current.setSize([w, h]); view.setResolution(res); view.setCenter([(extent[0]+extent[2])/2,(extent[1]+extent[3])/2]);
-      return new Promise((resov) => { mapRef.current?.once('rendercomplete', () => { const c = document.createElement('canvas'); c.width = w; c.height = h; const ctx = c.getContext('2d'); if (ctx) { ctx.clip(); mapElement.current?.querySelectorAll('.ol-layer canvas').forEach((cv: any) => ctx.drawImage(cv, 0, 0)); } mapRef.current?.setSize(originalSize); resov({ canvas: c, extent }); }); mapRef.current?.renderSync(); });
+      const originalResolution = view.getResolution();
+      const originalCenter = view.getCenter();
+
+      // Temporarily resize map for capture
+      mapRef.current.setSize([width, height]);
+      view.setResolution(res);
+      view.setCenter(center);
+
+      return new Promise((resolve) => {
+          mapRef.current?.once('rendercomplete', () => {
+              try {
+                  const captureCanvas = document.createElement('canvas');
+                  captureCanvas.width = width;
+                  captureCanvas.height = height;
+                  const ctx = captureCanvas.getContext('2d');
+                  if (!ctx) return resolve(null);
+
+                  // Combine all layers found in the map
+                  const layerCanvases = mapElement.current?.querySelectorAll('.ol-layer canvas');
+                  layerCanvases?.forEach((canvasElement: any) => {
+                      if (canvasElement.width > 0) {
+                          const transform = canvasElement.style.transform;
+                          let matrix;
+                          if (transform.indexOf('matrix') !== -1) {
+                              matrix = transform.split('(')[1].split(')')[0].split(',').map(Number);
+                          } else {
+                              matrix = [1, 0, 0, 1, 0, 0];
+                          }
+                          ctx.save();
+                          ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+                          ctx.drawImage(canvasElement, 0, 0);
+                          ctx.restore();
+                      }
+                  });
+
+                  // Restore original map state
+                  mapRef.current?.setSize(originalSize);
+                  view.setResolution(originalResolution);
+                  view.setCenter(originalCenter);
+                  
+                  resolve({ canvas: captureCanvas, extent });
+              } catch (err) {
+                  console.error("Export error:", err);
+                  resolve(null);
+              }
+          });
+          mapRef.current?.renderSync();
+      });
     }
   }));
 

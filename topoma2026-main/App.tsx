@@ -45,7 +45,6 @@ const BASEMAPS = [
     { id: 'google_hybrid', label: 'Satellite + Labels (Default)', icon: '🛰️📍' },
     { id: 'google_roads', label: 'Roads (Google)', icon: '🛣️' },
     { id: 'google_terrain', label: 'Terrain (Google)', icon: '⛰️' },
-    { id: 'google_hybrid_alt', label: 'Hybrid Alternative (Google)', icon: '🛰️📍' },
     { id: 'osm_standard', label: 'OSM Standard', icon: '🗺️' },
     { id: 'osm_hot', label: 'OSM Humanitarian', icon: '🆘' },
     { id: 'esri_sat', label: 'Aerial Imagery (ESRI)', icon: '🛰️' },
@@ -406,12 +405,25 @@ const App: React.FC = () => {
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const tiffBuffer = UTIF.encodeImage(imgData.data, canvas.width, canvas.height);
             const proj4lib = (await import('proj4')).default; 
+            
+            // World File Calculation (Geographic - WGS84)
             const minCorner = proj4lib('EPSG:3857', 'EPSG:4326', [extent[0], extent[1]]);
             const maxCorner = proj4lib('EPSG:3857', 'EPSG:4326', [extent[2], extent[3]]);
             const pixelWidthX = (maxCorner[0] - minCorner[0]) / canvas.width;
             const pixelHeightY = (maxCorner[1] - minCorner[1]) / canvas.height;
-            const tfw = [pixelWidthX.toFixed(12), "0.000000000000", "0.000000000000", (-pixelHeightY).toFixed(12), minCorner[0].toFixed(12), maxCorner[1].toFixed(12)].join('\n');
+            
+            // TFW: X-Scale, Rotation Y, Rotation X, Y-Scale (Negative), Top-Left Longitude, Top-Left Latitude
+            const tfw = [
+                pixelWidthX.toFixed(14), 
+                "0.00000000000000", 
+                "0.00000000000000", 
+                (-pixelHeightY).toFixed(14), 
+                minCorner[0].toFixed(14), 
+                maxCorner[1].toFixed(14)
+            ].join('\n');
+
             const prj = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]';
+            
             const date = new Date();
             const dateStr = `${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear().toString().slice(-2)}`;
             const fullDateStr = date.toLocaleDateString('fr-FR');
@@ -419,15 +431,24 @@ const App: React.FC = () => {
             const coordStr = `${lat >= 0 ? 'n' : 's'}${Math.floor(Math.abs(lat))}_${lng >= 0 ? 'e' : 'w'}${Math.floor(Math.abs(lng)).toString().padStart(3, '0')}`;
             const scaleObj = EXPORT_SCALES.find(s => s.value === currentScale);
             const scaleStr = scaleObj ? scaleObj.label.replace(/\s+/g, '') : currentScale.toString();
+            
             const baseName = `${locationName}_${scaleStr}_${coordStr}_${dateStr}_topoma`;
             const zip = new JSZip();
-            zip.file(`${baseName}.tif`, tiffBuffer); zip.file(`${baseName}.tfw`, tfw); zip.file(`${baseName}.prj`, prj);
+            zip.file(`${baseName}.tif`, tiffBuffer); 
+            zip.file(`${baseName}.tfw`, tfw); 
+            zip.file(`${baseName}.prj`, prj);
+            
             const blob = await zip.generateAsync({ type: 'blob' });
             const sizeInMB = (blob.size / (1024 * 1024)).toFixed(2);
             setZipBlob(blob); setFileName(`${baseName}.zip`);
             setExportResult({ name: `${baseName}.tif`, date: fullDateStr, size: parseFloat(sizeInMB) < 1 ? `${(blob.size / 1024).toFixed(0)} KB` : `${sizeInMB} MB`, coords: `Lat:${lat.toFixed(4)}, Lon:${lng.toFixed(4)}` });
             setStep('DONE');
-        } catch (e) { setStep('IDLE'); clearInterval(timer); alert("Erreur lors du traitement."); }
+        } catch (e) { 
+            console.error(e);
+            setStep('IDLE'); 
+            clearInterval(timer); 
+            alert("Erreur lors du traitement. Vérifiez que la zone est entièrement chargée."); 
+        }
     }, 1000);
   };
 
@@ -462,7 +483,7 @@ const App: React.FC = () => {
              <span className="text-xs font-black text-neutral-700 hidden sm:block">topoma</span>
           </div>
 
-          <button onClick={() => setToolboxOpen(!toolboxOpen)} className={`h-8 px-3 flex items-center gap-2 rounded border mr-2 ${toolboxOpen ? 'bg-neutral-300 border-neutral-400' : 'hover:bg-neutral-200 border-transparent'}`}>
+          <button onClick={() => setToolboxOpen(!toolboxOpen)} className={`h-8 px-3 flex items-center gap-2 rounded border mr-2 transition-all ${toolboxOpen ? 'bg-neutral-300 border-neutral-400 text-neutral-800' : 'bg-white hover:bg-neutral-200 border-neutral-300 text-neutral-600'}`}>
               <i className="fas fa-file-image text-green-700"></i> <span className="text-xs font-bold hidden md:inline">Exporter GeoTIFF</span>
           </button>
 
@@ -515,8 +536,8 @@ const App: React.FC = () => {
                       </div>
                   )}
                </div>
-               <button onClick={() => setTocOpen(!tocOpen)} className={`flex h-8 px-3 items-center gap-2 rounded border ml-1 ${tocOpen ? 'bg-blue-600 text-white border-blue-700' : 'bg-white hover:bg-neutral-200'}`}>
-                  <i className={`fas fa-layer-group ${tocOpen ? 'text-white' : 'text-blue-600'}`}></i> <span className="text-xs font-bold hidden sm:inline">Couches</span>
+               <button onClick={() => setTocOpen(!tocOpen)} className={`flex h-8 px-3 items-center gap-2 rounded border ml-1 transition-all ${tocOpen ? 'bg-blue-600 text-white border-blue-700' : 'bg-white hover:bg-neutral-200 text-blue-600'}`}>
+                  <i className={`fas fa-layer-group`}></i> <span className="text-xs font-bold hidden sm:inline">Couches</span>
                </button>
           </div>
       </div>
@@ -547,9 +568,9 @@ const App: React.FC = () => {
                               <div><label className="block text-neutral-600 mb-1.5 font-medium">Échelle:</label><select value={selectedScale} onChange={(e) => handleScaleChange(Number(e.target.value))} className="w-full border p-1.5 rounded bg-white">{EXPORT_SCALES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}</select></div>
                               <div className="border border-neutral-200 p-3 bg-neutral-50 min-h-[160px] flex flex-col items-center justify-center text-center rounded">
                                   {step === 'IDLE' && <span className="text-neutral-400 italic">Sélectionnez une zone...</span>}
-                                  {(step === 'SELECTED' || (selectedLayerId !== 'manual' && exportData) || (selectedLayerId === 'manual' && manualFeatures.length > 0)) && (<button onClick={() => startClipping()} className="bg-blue-600 text-white px-6 py-2 rounded font-bold">GÉNÉRER</button>)}
+                                  {(step === 'SELECTED' || (selectedLayerId !== 'manual' && exportData) || (selectedLayerId === 'manual' && manualFeatures.length > 0)) && (<button onClick={() => startClipping()} className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition-colors">GÉNÉRER</button>)}
                                   {step === 'PROCESSING' && (<div className="flex flex-col items-center"><div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mb-2"></div><span className="text-blue-700 font-bold text-xs">Traitement... {countdown}%</span></div>)}
-                                  {step === 'DONE' && exportResult && (<div className="flex flex-col items-center w-full"><div className="text-green-600 font-bold mb-2">Terminé !</div><div className="w-full bg-white border rounded mb-3 text-[10px] text-left overflow-hidden"><div className="grid grid-cols-[60px_1fr] border-b"><div className="bg-neutral-100 p-1 font-bold">Nom</div><div className="p-1 truncate">{exportResult.name}</div></div><div className="grid grid-cols-[60px_1fr] border-b"><div className="bg-neutral-100 p-1 font-bold">Taille</div><div className="p-1 font-bold text-blue-600">{exportResult.size}</div></div></div><button onClick={downloadFile} className="bg-green-600 text-white px-4 py-2 rounded font-bold w-full">Télécharger ZIP</button></div>)}
+                                  {step === 'DONE' && exportResult && (<div className="flex flex-col items-center w-full animate-scale-in"><div className="text-green-600 font-bold mb-2">Terminé !</div><div className="w-full bg-white border rounded mb-3 text-[10px] text-left overflow-hidden"><div className="grid grid-cols-[60px_1fr] border-b"><div className="bg-neutral-100 p-1 font-bold">Nom</div><div className="p-1 truncate">{exportResult.name}</div></div><div className="grid grid-cols-[60px_1fr] border-b"><div className="bg-neutral-100 p-1 font-bold">Taille</div><div className="p-1 font-bold text-blue-600">{exportResult.size}</div></div></div><button onClick={downloadFile} className="bg-green-600 text-white px-4 py-2 rounded font-bold w-full hover:bg-green-700">Télécharger ZIP</button></div>)}
                               </div>
                           </div>
                       </div>
@@ -561,7 +582,7 @@ const App: React.FC = () => {
           {/* CENTER: MAP */}
           <div className="flex-grow relative bg-white z-10">
               {/* Drawing Tools Container */}
-              <div className={`absolute top-2 transition-all duration-300 z-30 flex flex-col items-end pointer-events-none gap-2 ${tocOpen ? 'right-[calc(18rem+0.5rem)]' : 'right-2'}`}>
+              <div className={`absolute top-2 transition-all duration-300 z-30 flex flex-col items-end pointer-events-none gap-2 ${tocOpen ? 'right-[calc(20rem+0.5rem)]' : 'right-2'}`}>
                   
                   {/* Unified Basemap Selector */}
                   <div className="relative pointer-events-auto">
@@ -714,22 +735,22 @@ const App: React.FC = () => {
                         <CloseButton onClick={() => setTocOpen(false)} />
                     </div>
                 </div>
-                <div className="flex-grow overflow-y-auto p-4 space-y-6">
+                <div className="flex-grow overflow-y-auto p-4 space-y-6 bg-neutral-50/30">
                     <div>
-                      <div className="flex items-center gap-2 mb-3 font-bold text-xs text-neutral-800 uppercase tracking-wider"><i className="fas fa-draw-polygon text-blue-500"></i> Dessins Manuels</div>
+                      <div className="flex items-center gap-2 mb-3 font-bold text-xs text-neutral-800 uppercase tracking-wider border-b pb-1"><i className="fas fa-draw-polygon text-blue-500"></i> Dessins Manuels</div>
                       <div className="space-y-1">
-                          <div className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${selectedLayerId === 'manual' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'hover:bg-neutral-50 text-neutral-600'}`} onClick={() => handleLayerSelect('manual')}>
-                              <span className="text-xs font-medium truncate">Tous les éléments</span>
+                          <div className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors shadow-sm ${selectedLayerId === 'manual' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-600'}`} onClick={() => handleLayerSelect('manual')}>
+                              <span className="text-xs font-bold truncate">Tous les éléments</span>
                               <button onClick={(e) => { e.stopPropagation(); openAttributeTable('manual'); }} title="Table d'attributs" className="text-blue-500 hover:scale-110 p-1"><i className="fas fa-table"></i></button>
                           </div>
                       </div>
                     </div>
 
                     <div>
-                      <div className="flex items-center gap-2 mb-3 font-bold text-xs text-neutral-800 uppercase tracking-wider"><i className="fas fa-file-import text-yellow-600"></i> Fichiers Importés</div>
+                      <div className="flex items-center gap-2 mb-3 font-bold text-xs text-neutral-800 uppercase tracking-wider border-b pb-1"><i className="fas fa-file-import text-yellow-600"></i> Fichiers Importés</div>
                       <div className="space-y-1">
                           {layers.length > 0 ? layers.map((layer) => (
-                              <div key={layer.id} className={`flex items-center justify-between p-2 rounded cursor-pointer group transition-colors ${selectedLayerId === layer.id ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'hover:bg-neutral-50 text-neutral-600'}`} onClick={() => handleLayerSelect(layer.id)}>
+                              <div key={layer.id} className={`flex items-center justify-between p-2 rounded cursor-pointer group transition-colors shadow-sm ${selectedLayerId === layer.id ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-600'}`} onClick={() => handleLayerSelect(layer.id)}>
                                   <span className="text-xs font-medium truncate flex-grow" title={layer.name}>
                                       {layer.name}
                                   </span>
@@ -739,7 +760,7 @@ const App: React.FC = () => {
                                   </div>
                               </div>
                           )) : (
-                              <div className="text-[11px] text-neutral-400 italic py-4 text-center border border-dashed rounded bg-neutral-50">Aucun fichier chargé</div>
+                              <div className="text-[11px] text-neutral-400 italic py-6 text-center border border-dashed rounded bg-neutral-100">Aucun fichier chargé</div>
                           )}
                       </div>
                     </div>
