@@ -602,7 +602,7 @@ const App: React.FC = () => {
 
           {/* CENTER: MAP */}
           <div className="flex-grow relative bg-white z-[10]">
-              {/* Drawing Tools Container */}
+              {/* Drawing Tools Container (Top) */}
               <div className={`absolute top-2 transition-all duration-300 z-[70] flex flex-col items-end pointer-events-none gap-2 ${tocOpen ? 'right-[calc(20rem+0.5rem)]' : 'right-2'}`}>
                   
                   {/* Unified Basemap Selector */}
@@ -652,6 +652,17 @@ const App: React.FC = () => {
                   <button onClick={() => toggleTool('Polygon')} className={`pointer-events-auto w-10 h-10 rounded-lg shadow-md border flex items-center justify-center ${activeTool === 'Polygon' ? 'bg-blue-600 text-white' : 'bg-white'}`}><i className="fas fa-draw-polygon text-lg"></i></button>
                   <button onClick={() => toggleTool('Line')} className={`pointer-events-auto w-10 h-10 rounded-lg shadow-md border flex items-center justify-center ${activeTool === 'Line' ? 'bg-blue-600 text-white' : 'bg-white'}`}><i className="fas fa-slash text-lg"></i></button>
                   <button onClick={() => toggleTool('Point')} className={`pointer-events-auto w-10 h-10 rounded-lg shadow-md border flex items-center justify-center ${activeTool === 'Point' ? 'bg-blue-600 text-white' : 'bg-white'}`}><i className="fas fa-map-marker-alt text-lg"></i></button>
+              </div>
+
+              {/* My Location Button (Bottom-Right) */}
+              <div className={`absolute bottom-4 transition-all duration-300 z-[70] pointer-events-none ${tocOpen ? 'right-[calc(20rem+1rem)]' : 'right-4'}`}>
+                  <button 
+                    onClick={() => mapComponentRef.current?.locateUser()}
+                    title="Ma position"
+                    className="pointer-events-auto w-8 h-8 rounded-full shadow-lg border border-neutral-200 bg-white hover:bg-neutral-100 flex items-center justify-center text-blue-600 transition-all hover:scale-110 active:scale-95"
+                  >
+                      <i className="fas fa-location-crosshairs text-base"></i>
+                  </button>
               </div>
 
               <MapComponent 
