@@ -407,13 +407,11 @@ const App: React.FC = () => {
             const tiffBuffer = UTIF.encodeImage(imgData.data, canvas.width, canvas.height);
             const proj4lib = (await import('proj4')).default; 
             
-            // World File Calculation (Geographic - WGS84)
             const minCorner = proj4lib('EPSG:3857', 'EPSG:4326', [extent[0], extent[1]]);
             const maxCorner = proj4lib('EPSG:3857', 'EPSG:4326', [extent[2], extent[3]]);
             const pixelWidthX = (maxCorner[0] - minCorner[0]) / canvas.width;
             const pixelHeightY = (maxCorner[1] - minCorner[1]) / canvas.height;
             
-            // TFW: X-Scale, Rotation Y, Rotation X, Y-Scale (Negative), Top-Left Longitude, Top-Left Latitude
             const tfw = [
                 pixelWidthX.toFixed(14), 
                 "0.00000000000000", 
@@ -559,7 +557,7 @@ const App: React.FC = () => {
                   {showSearchPanel && (
                       <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-xl border border-neutral-300 w-64 z-[110] overflow-hidden">
                           <div className="p-2 border-b bg-neutral-50 flex items-center gap-2"><i className="fas fa-search text-neutral-400 text-xs"></i><input autoFocus type="text" className="w-full bg-transparent text-xs outline-none" placeholder="Rechercher..." value={searchQuery} onChange={handleSearchInput}/></div>
-                          {searchResults.length > 0 ? (<ul className="max-h-60 overflow-y-auto">{searchResults.map((result) => (<li key={result.place_id}><button onClick={() => handleSelectSearchResult(result)} className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 border-b last:border-0 flex flex-col gap-0.5"><span className="font-bold text-neutral-700 truncate">{result.display_name.split(',')[0]}</span><span className="text-[10px] text-neutral-500 truncate">{result.display_name}</span></button></li>))}</ul>) : (searchQuery.length > 2 && <div className="p-3 text-center text-xs text-neutral-400 italic">Aucun résultat.</div>)}
+                          {searchResults.length > 0 ? (<ul className="max-h-60 overflow-y-auto">{searchResults.map((result) => (<li key={result.place_id}><button onClick={() => handleSelectSearchResult(result)} className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 border-b last:border-0 flex flex-col gap-0.5"><span className="font-bold text-neutral-700 truncate">{result.display_name.split(',')[0]}</span><span className="text-[10px] text-neutral-500 truncate">{result.display_name}</span></button></li>))}</ul>) : (searchQuery.length > 2 && <div className="p-3 text-center text-xs text-neutral-400 italic">Aucun نتيجة.</div>)}
                       </div>
                   )}
                </div>
@@ -569,10 +567,7 @@ const App: React.FC = () => {
           </div>
       </div>
 
-      {/* --- WORKSPACE --- */}
       <div className="flex-grow flex relative overflow-hidden bg-white">
-          
-          {/* LEFT: Export Tools */}
           <div className={`${toolboxOpen ? 'w-80' : 'w-0 overflow-hidden'} transition-all duration-300 bg-white border-r border-neutral-300 flex flex-col shrink-0 relative z-[20]`}>
                <div className="w-80 flex flex-col h-full">
                   <div className="bg-neutral-100 p-2 border-b font-bold text-xs text-green-800 flex justify-between items-center shrink-0">
@@ -580,8 +575,6 @@ const App: React.FC = () => {
                     <CloseButton onClick={() => setToolboxOpen(false)} />
                   </div>
                   <div className="flex-grow overflow-y-auto p-3 bg-neutral-50">
-                      
-                      {/* LARGE IMPORT BUTTONS */}
                       <div className="grid grid-cols-4 gap-2 mb-4">
                           <button onClick={() => handleFileClick(kmlInputRef)} title="KML/KMZ" className="flex flex-col items-center justify-center p-2 bg-white border border-neutral-200 rounded shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-all group">
                               <i className="fas fa-globe text-2xl text-blue-500 group-hover:scale-110 transition-transform"></i>
@@ -627,109 +620,55 @@ const App: React.FC = () => {
                </div>
           </div>
 
-          {/* CENTER: MAP */}
           <div className="flex-grow relative bg-white z-[10]">
-              {/* Drawing Tools Container (Top) */}
               <div className={`absolute top-2 transition-all duration-300 z-[70] flex flex-col items-end pointer-events-none gap-2 ${tocOpen ? 'right-[calc(20rem+0.5rem)]' : 'right-2'}`}>
-                  
-                  {/* Unified Basemap Selector */}
                   <div className="relative pointer-events-auto">
-                    <button 
-                        onClick={() => setBasemapPanelOpen(!basemapPanelOpen)} 
-                        title="Changer de fond de plan"
-                        className={`w-10 h-10 rounded-lg shadow-md border flex items-center justify-center transition-all hover:scale-105 ${basemapPanelOpen ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-600'}`}
-                    >
-                        <i className={`fas fa-globe-africa text-lg`}></i>
-                    </button>
-                    
+                    <button onClick={() => setBasemapPanelOpen(!basemapPanelOpen)} title="Changer de fond de plan" className={`w-10 h-10 rounded-lg shadow-md border flex items-center justify-center transition-all hover:scale-105 ${basemapPanelOpen ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-600'}`}><i className={`fas fa-globe-africa text-lg`}></i></button>
                     {basemapPanelOpen && (
                         <div className="absolute top-0 right-12 bg-white rounded-lg shadow-2xl border border-neutral-200 w-64 z-[110] overflow-hidden animate-scale-in origin-right">
-                            <div className="bg-neutral-100 p-2 border-b flex justify-between items-center">
-                                <span className="text-[11px] font-bold text-neutral-700">Sélectionner le fond de plan</span>
-                                <CloseButton onClick={() => setBasemapPanelOpen(false)} />
-                            </div>
-                            <div className="max-h-[400px] overflow-y-auto p-1">
-                                {BASEMAPS.map((bm) => (
-                                    <label key={bm.id} className="flex items-center gap-3 px-3 py-2 hover:bg-blue-50 cursor-pointer group transition-colors">
-                                        <input 
-                                            type="radio" 
-                                            name="basemap" 
-                                            checked={basemapId === bm.id} 
-                                            onChange={() => { setBasemapId(bm.id); setBasemapPanelOpen(false); }}
-                                            className="w-4 h-4 text-blue-600 border-neutral-300 focus:ring-blue-500"
-                                        />
-                                        <span className="text-[13px] text-neutral-600 group-hover:text-neutral-800 flex items-center gap-2">
-                                            <span className="text-base">{bm.icon}</span>
-                                            {bm.label}
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
+                            <div className="bg-neutral-100 p-2 border-b flex justify-between items-center"><span className="text-[11px] font-bold text-neutral-700">Sélectionner le fond de plan</span><CloseButton onClick={() => setBasemapPanelOpen(false)} /></div>
+                            <div className="max-h-[400px] overflow-y-auto p-1">{BASEMAPS.map((bm) => (<label key={bm.id} className="flex items-center gap-3 px-3 py-2 hover:bg-blue-50 cursor-pointer group transition-colors"><input type="radio" name="basemap" checked={basemapId === bm.id} onChange={() => { setBasemapId(bm.id); setBasemapPanelOpen(false); }} className="w-4 h-4 text-blue-600 border-neutral-300 focus:ring-blue-500"/><span className="text-[13px] text-neutral-600 group-hover:text-neutral-800 flex items-center gap-2"><span className="text-base">{bm.icon}</span>{bm.label}</span></label>))}</div>
                         </div>
                     )}
                   </div>
-                  
                   <div className="h-1"></div>
-
                   <div className="relative pointer-events-auto">
                       <button onClick={() => { setShowExcelPanel(!showExcelPanel); setShowGoToPanel(false); }} className="w-10 h-10 bg-white rounded-lg shadow-md border hover:bg-neutral-50 flex items-center justify-center text-green-600 transition-transform hover:scale-105"><i className="fas fa-file-excel text-lg"></i></button>
                       {showExcelPanel && (
                           <div className="mt-2 bg-white rounded-lg shadow-xl border p-3 w-64 absolute top-full right-0 z-[110] animate-scale-in origin-top-right">
-                              <div className="flex justify-between items-center mb-2 border-b pb-1">
-                                  <span className="text-xs font-bold flex items-center gap-1.5">
-                                      Import Excel XY
-                                      <button onClick={() => setShowExcelHelp(true)} className="text-blue-500 hover:text-blue-700 text-sm">
-                                          <i className="fas fa-info-circle"></i>
-                                      </button>
-                                  </span>
-                                  <CloseButton onClick={() => setShowExcelPanel(false)} />
-                              </div>
+                              <div className="flex justify-between items-center mb-2 border-b pb-1"><span className="text-xs font-bold flex items-center gap-1.5">Import Excel XY <button onClick={() => setShowExcelHelp(true)} className="text-blue-500 hover:text-blue-700 text-sm"><i className="fas fa-info-circle"></i></button></span><CloseButton onClick={() => setShowExcelPanel(false)} /></div>
                               <div className="space-y-3">
                                   <div><label className="block text-[10px] mb-0.5 text-neutral-500">Projection (Zone)</label><select value={selectedZone} onChange={(e) => setSelectedZone(e.target.value)} className="w-full text-xs border rounded p-1 bg-neutral-50">{ZONES.map(z => <option key={z.code} value={z.code}>{z.label}</option>)}</select></div>
-                                  <div className="border border-dashed border-neutral-300 rounded-lg p-3 text-center bg-neutral-50">
-                                      <i className="fas fa-folder-open text-blue-500 mb-1"></i>
-                                      <button onClick={() => handleFileClick(excelInputRef)} className="block w-full text-xs text-blue-600 font-bold hover:underline mb-1">Choisir un fichier</button>
-                                      <div className="text-[10px] text-neutral-400 truncate">{selectedExcelFile ? selectedExcelFile.name : "Aucun fichier sélectionné"}</div>
-                                  </div>
+                                  <div className="border border-dashed border-neutral-300 rounded-lg p-3 text-center bg-neutral-50"><i className="fas fa-folder-open text-blue-500 mb-1"></i><button onClick={() => handleFileClick(excelInputRef)} className="block w-full text-xs text-blue-600 font-bold hover:underline mb-1">Choisir un fichier</button><div className="text-[10px] text-neutral-400 truncate">{selectedExcelFile ? selectedExcelFile.name : "Aucun fichier sélectionné"}</div></div>
                                   <button onClick={processExcelFile} disabled={!selectedExcelFile} className={`w-full text-white text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${selectedExcelFile ? 'bg-green-600 hover:bg-green-700 shadow-md' : 'bg-neutral-300 cursor-not-allowed'}`}><i className="fas fa-upload text-[10px]"></i> Charger les points</button>
                               </div>
                           </div>
                       )}
                   </div>
                   
-                  {/* DRAWING TOOLS (Ordered as requested) */}
                   <div className="flex flex-col gap-1.5 items-end">
-                      <div className="flex gap-1.5 items-center">
-                        {(activeTool === 'Select' || manualFeatures.length > 0) && (
-                            <button 
-                                onClick={handleBulkDownload}
-                                title="Télécharger les éléments dessinés (KML/JSON)"
-                                className="pointer-events-auto w-9 h-9 rounded-full shadow-lg border-2 border-white bg-green-600 text-white hover:bg-green-700 flex items-center justify-center transition-all animate-scale-in"
-                            >
-                                <i className="fas fa-cloud-download-alt text-base"></i>
-                            </button>
-                        )}
-                        <button onClick={() => toggleTool('Select')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Select' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="Sélectionner"><i className="fas fa-mouse-pointer text-base"></i></button>
-                      </div>
                       <button onClick={() => toggleTool('Point')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Point' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="نقطة"><i className="fas fa-map-marker-alt text-base"></i></button>
                       <button onClick={() => toggleTool('Line')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Line' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="خط"><i className="fas fa-slash text-base"></i></button>
                       <button onClick={() => toggleTool('Polygon')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Polygon' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="مضلع"><i className="fas fa-draw-polygon text-base"></i></button>
                       <button onClick={() => toggleTool('Rectangle')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Rectangle' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="مربع"><i className="far fa-square text-base"></i></button>
                       <button onClick={() => toggleTool('Edit')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Edit' ? 'bg-orange-500 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="تعديل"><i className="fas fa-pen-to-square text-base"></i></button>
-                      <button onClick={() => toggleTool('Delete')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Delete' ? 'bg-red-600 text-white' : 'bg-white text-red-600 hover:bg-red-50'}`} title="حذف عنصر"><i className="fas fa-trash-alt text-base"></i></button>
+                      
+                      {manualFeatures.length > 0 && (
+                        <button 
+                            onClick={handleBulkDownload} 
+                            title="تنزيل العناصر"
+                            className="pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center bg-white text-green-600 hover:bg-green-50 transition-all animate-scale-in"
+                        >
+                            <i className="fas fa-cloud-download-alt text-base"></i>
+                        </button>
+                      )}
+
                       <button onClick={() => mapComponentRef.current?.undo()} className="pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center bg-white text-neutral-700 hover:bg-neutral-50 transition-all active:scale-90" title="تراجع"><i className="fas fa-rotate-left text-base"></i></button>
                   </div>
               </div>
 
-              {/* My Location Button (Bottom-Right - Raised higher) */}
               <div className={`absolute bottom-20 transition-all duration-300 z-[70] pointer-events-none ${tocOpen ? 'right-[calc(20rem+1rem)]' : 'right-4'}`}>
-                  <button 
-                    onClick={() => mapComponentRef.current?.locateUser()}
-                    title="Ma position"
-                    className="pointer-events-auto w-10 h-10 rounded-full shadow-lg border border-neutral-200 bg-white hover:bg-neutral-100 flex items-center justify-center text-blue-600 transition-all hover:scale-110 active:scale-95"
-                  >
-                      <i className="fas fa-location-crosshairs text-lg"></i>
-                  </button>
+                  <button onClick={() => mapComponentRef.current?.locateUser()} title="Ma position" className="pointer-events-auto w-10 h-10 rounded-full shadow-lg border border-neutral-200 bg-white hover:bg-neutral-100 flex items-center justify-center text-blue-600 transition-all hover:scale-110 active:scale-95"><i className="fas fa-location-crosshairs text-lg"></i></button>
               </div>
 
               <MapComponent 
@@ -748,148 +687,45 @@ const App: React.FC = () => {
                   }
                 }} 
               />
-
-              {/* EXCEL IMPORT HELP MODAL */}
               {showExcelHelp && (
                   <div className="fixed inset-0 bg-black/80 z-[300] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowExcelHelp(false)}>
                       <div className="bg-white p-2 rounded-xl shadow-2xl max-w-2xl w-full relative animate-scale-in" onClick={e => e.stopPropagation()}>
                           <div className="absolute top-[-10px] right-[-10px]"><CloseButton onClick={() => setShowExcelHelp(false)} /></div>
-                          <div className="bg-neutral-100 px-4 py-2 rounded-t-lg border-b font-bold text-neutral-700 text-sm mb-2 flex items-center gap-2">
-                              <i className="fas fa-info-circle text-blue-500"></i> Format de fichier requis (Exemple)
-                          </div>
-                          <img 
-                              src="https://ia902900.us.archive.org/14/items/capture-decran-2026-02-01-200134/Capture%20d%27%C3%A9cran%202026-02-01%20200134.png" 
-                              alt="Format Excel Help" 
-                              className="w-full h-auto rounded border shadow-inner" 
-                          />
-                          <div className="mt-3 p-3 bg-blue-50 rounded-lg text-[11px] text-blue-800 italic">
-                              * Assurez-وزك أن vos colonnes sont nommées 'X' et 'Y' (ou 'Easting'/'Northing').
-                          </div>
+                          <div className="bg-neutral-100 px-4 py-2 rounded-t-lg border-b font-bold text-neutral-700 text-sm mb-2 flex items-center gap-2"><i className="fas fa-info-circle text-blue-500"></i> Format de fichier requis (Exemple)</div>
+                          <img src="https://ia902900.us.archive.org/14/items/capture-decran-2026-02-01-200134/Capture%20d%27%C3%A9cran%202026-02-01%20200134.png" alt="Format Excel Help" className="w-full h-auto rounded border shadow-inner" />
+                          <div className="mt-3 p-3 bg-blue-50 rounded-lg text-[11px] text-blue-800 italic">* Assurez-vous que vos colonnes sont nommées 'X' et 'Y' (ou 'Easting'/'Northing').</div>
                       </div>
                   </div>
               )}
-
-              {/* ATTRIBUTE TABLE OVERLAY */}
               {showAttrTable && (
                   <div className={`absolute bottom-0 left-0 ${tocOpen ? 'right-80' : 'right-0'} bg-white border-t-2 border-blue-500 h-1/3 z-[80] flex flex-col shadow-2xl animate-slide-up transition-all duration-300`}>
-                      <div className="bg-neutral-100 p-2 flex justify-between items-center border-b">
-                          <span className="text-xs font-bold text-neutral-700 flex items-center gap-2">
-                              <i className="fas fa-table text-blue-600"></i> Table d'attributs: {attrTableTitle}
-                          </span>
-                          <CloseButton onClick={() => setShowAttrTable(false)} />
-                      </div>
+                      <div className="bg-neutral-100 p-2 flex justify-between items-center border-b"><span className="text-xs font-bold text-neutral-700 flex items-center gap-2"><i className="fas fa-table text-blue-600"></i> Table d'attributs: {attrTableTitle}</span><CloseButton onClick={() => setShowAttrTable(false)} /></div>
                       <div className="flex-grow overflow-auto">
-                          {attrTableData.length > 0 ? (
-                              <table className="w-full text-[11px] text-left">
-                                  <thead className="bg-neutral-50 sticky top-0 shadow-sm">
-                                      <tr>
-                                          {Object.keys(attrTableData[0]).filter(k => k !== '_featureId').map(key => (
-                                              <th key={key} className="px-3 py-2 border-b border-r bg-neutral-100 font-bold uppercase text-[9px] text-neutral-500">{key}</th>
-                                          ))}
-                                      </tr>
-                                  </thead>
-                                  <tbody>
-                                      {attrTableData.map((row, idx) => (
-                                          <tr 
-                                            key={idx} 
-                                            onClick={() => handleRowClick(row)}
-                                            className={`cursor-pointer transition-colors ${selectedAttrFeatureId === row._featureId ? 'bg-blue-100 hover:bg-blue-200' : 'hover:bg-blue-50 odd:bg-white even:bg-neutral-50/50'}`}
-                                          >
-                                              {Object.entries(row).filter(([k]) => k !== '_featureId').map(([key, vIdx], idx2) => (
-                                                  <td key={idx2} className="px-3 py-1.5 border-b border-r truncate max-w-[200px]" title={String(vIdx)}>{String(vIdx)}</td>
-                                              ))}
-                                          </tr>
-                                      ))}
-                                  </tbody>
-                              </table>
-                          ) : (
-                              <div className="p-8 text-center text-neutral-400 italic text-xs">Aucune donnée disponible.</div>
-                          )}
+                          {attrTableData.length > 0 ? (<table className="w-full text-[11px] text-left"><thead className="bg-neutral-50 sticky top-0 shadow-sm"><tr>{Object.keys(attrTableData[0]).filter(k => k !== '_featureId').map(key => (<th key={key} className="px-3 py-2 border-b border-r bg-neutral-100 font-bold uppercase text-[9px] text-neutral-500">{key}</th>))}</tr></thead><tbody>{attrTableData.map((row, idx) => (<tr key={idx} onClick={() => handleRowClick(row)} className={`cursor-pointer transition-colors ${selectedAttrFeatureId === row._featureId ? 'bg-blue-100 hover:bg-blue-200' : 'hover:bg-blue-50 odd:bg-white even:bg-neutral-50/50'}`}>{Object.entries(row).filter(([k]) => k !== '_featureId').map(([key, vIdx], idx2) => (<td key={idx2} className="px-3 py-1.5 border-b border-r truncate max-w-[200px]" title={String(vIdx)}>{String(vIdx)}</td>))}</tr>))}</tbody></table>) : (<div className="p-8 text-center text-neutral-400 italic text-xs">Aucune donnée disponible.</div>)}
                       </div>
                   </div>
               )}
-
-              {/* LABEL PICKER MODAL */}
               {labelPicker && (
                   <div className="absolute inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
-                      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
-                          <div className="bg-neutral-100 p-3 border-b flex justify-between items-center">
-                              <span className="text-sm font-bold">Sélectionner le champ d'étiquette</span>
-                              <CloseButton onClick={() => setLabelPicker(null)} />
-                          </div>
-                          <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
-                              <button 
-                                onClick={() => selectLabelField("")}
-                                className="w-full text-left px-3 py-2 text-xs border rounded hover:bg-neutral-100 font-bold text-red-600"
-                              >
-                                -- Aucune étiquette --
-                              </button>
-                              {labelPicker.fields.map(field => (
-                                  <button 
-                                    key={field} 
-                                    onClick={() => selectLabelField(field)}
-                                    className="w-full text-left px-3 py-2 text-xs border rounded hover:bg-blue-50 transition-colors"
-                                  >
-                                      {field}
-                                  </button>
-                              ))}
-                          </div>
-                      </div>
+                      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-scale-in"><div className="bg-neutral-100 p-3 border-b flex justify-between items-center"><span className="text-sm font-bold">Sélectionner le champ d'étiquette</span><CloseButton onClick={() => setLabelPicker(null)} /></div><div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto"><button onClick={() => selectLabelField("")} className="w-full text-left px-3 py-2 text-xs border rounded hover:bg-neutral-100 font-bold text-red-600">-- Aucune étiquette --</button>{labelPicker.fields.map(field => (<button key={field} onClick={() => selectLabelField(field)} className="w-full text-left px-3 py-2 text-xs border rounded hover:bg-blue-50 transition-colors">{field}</button>))}</div></div>
                   </div>
               )}
           </div>
 
-          {/* RIGHT: TOC (Couches - Sidebar Panel) */}
           <div className={`${tocOpen ? 'w-80 border-l' : 'w-0 overflow-hidden'} transition-all duration-300 bg-white border-neutral-300 flex flex-col absolute right-0 top-0 h-full z-[90] shadow-2xl shrink-0`}>
               <div className="w-80 flex flex-col h-full">
-                <div className="bg-neutral-100 p-2.5 border-b font-bold text-xs text-neutral-700 flex justify-between items-center shrink-0">
-                    <span className="flex items-center gap-2"><i className="fas fa-layer-group text-blue-600"></i> Couches de données</span>
-                    <div className="flex gap-3 items-center">
-                        <CloseButton onClick={() => setTocOpen(false)} />
-                    </div>
-                </div>
+                <div className="bg-neutral-100 p-2.5 border-b font-bold text-xs text-neutral-700 flex justify-between items-center shrink-0"><span className="flex items-center gap-2"><i className="fas fa-layer-group text-blue-600"></i> Couches de données</span><div className="flex gap-3 items-center"><CloseButton onClick={() => setTocOpen(false)} /></div></div>
                 <div className="flex-grow overflow-y-auto p-4 space-y-6 bg-neutral-50/30">
-                    <div>
-                      <div className="flex items-center gap-2 mb-3 font-bold text-xs text-neutral-800 uppercase tracking-wider border-b pb-1"><i className="fas fa-draw-polygon text-blue-500"></i> Dessins Manuels</div>
-                      <div className="space-y-1">
-                          <div className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors shadow-sm ${selectedLayerId === 'manual' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-600'}`} onClick={() => handleLayerSelect('manual')}>
-                              <span className="text-xs font-bold truncate">Tous les éléments</span>
-                              <button onClick={(e) => { e.stopPropagation(); openAttributeTable('manual'); }} title="Table d'attributs" className="text-blue-500 hover:scale-110 p-1"><i className="fas fa-table"></i></button>
-                          </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-3 font-bold text-xs text-neutral-800 uppercase tracking-wider border-b pb-1"><i className="fas fa-file-import text-yellow-600"></i> Fichiers Importés</div>
-                      <div className="space-y-1">
-                          {layers.length > 0 ? layers.map((layer) => (
-                              <div key={layer.id} className={`flex items-center justify-between p-2 rounded cursor-pointer group transition-colors shadow-sm ${selectedLayerId === layer.id ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-600'}`} onClick={() => handleLayerSelect(layer.id)}>
-                                  <span className="text-xs font-medium truncate flex-grow" title={layer.name}>
-                                      {layer.name}
-                                  </span>
-                                  <div className="flex gap-2 shrink-0 ml-2">
-                                      <button onClick={(e) => { e.stopPropagation(); openLabelPicker(layer); }} title="Étiquettes" className="text-orange-500 hover:text-orange-700 transition-transform hover:scale-110"><i className="fas fa-tag"></i></button>
-                                      <button onClick={(e) => { e.stopPropagation(); openAttributeTable(layer); }} title="Données" className="text-blue-500 hover:text-blue-700 transition-transform hover:scale-110"><i className="fas fa-table"></i></button>
-                                  </div>
-                              </div>
-                          )) : (
-                              <div className="text-[11px] text-neutral-400 italic py-6 text-center border border-dashed rounded bg-neutral-100">Aucun fichier chargé</div>
-                          )}
-                      </div>
-                    </div>
-                    
+                    <div><div className="flex items-center gap-2 mb-3 font-bold text-xs text-neutral-800 uppercase tracking-wider border-b pb-1"><i className="fas fa-draw-polygon text-blue-500"></i> Dessins Manuels</div><div className="space-y-1"><div className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors shadow-sm ${selectedLayerId === 'manual' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-600'}`} onClick={() => handleLayerSelect('manual')}><span className="text-xs font-bold truncate">Tous les éléments</span><button onClick={(e) => { e.stopPropagation(); openAttributeTable('manual'); }} title="Table d'attributs" className="text-blue-500 hover:scale-110 p-1"><i className="fas fa-table"></i></button></div></div></div>
+                    <div><div className="flex items-center gap-2 mb-3 font-bold text-xs text-neutral-800 uppercase tracking-wider border-b pb-1"><i className="fas fa-file-import text-yellow-600"></i> Fichiers Importés</div><div className="space-y-1">{layers.length > 0 ? layers.map((layer) => (<div key={layer.id} className={`flex items-center justify-between p-2 rounded cursor-pointer group transition-colors shadow-sm ${selectedLayerId === layer.id ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-600'}`} onClick={() => handleLayerSelect(layer.id)}><span className="text-xs font-medium truncate flex-grow" title={layer.name}>{layer.name}</span><div className="flex gap-2 shrink-0 ml-2"><button onClick={(e) => { e.stopPropagation(); openLabelPicker(layer); }} title="Étiquettes" className="text-orange-500 hover:text-orange-700 transition-transform hover:scale-110"><i className="fas fa-tag"></i></button><button onClick={(e) => { e.stopPropagation(); openAttributeTable(layer); }} title="Données" className="text-blue-500 hover:text-blue-700 transition-transform hover:scale-110"><i className="fas fa-table"></i></button></div></div>)) : (<div className="text-[11px] text-neutral-400 italic py-6 text-center border border-dashed rounded bg-neutral-100">Aucun fichier chargé</div>)}</div></div>
                     <DeveloperFooter />
                 </div>
               </div>
           </div>
       </div>
 
-      {/* STATUS BAR */}
       <div className="bg-neutral-200 border-t border-neutral-300 h-6 flex items-center px-2 text-[10px] text-neutral-600 justify-between shrink-0 z-[100]">
-          <div className="flex gap-6 items-center">
-              <div className="flex gap-3 font-mono text-neutral-700"><span className="w-20 text-right">{mouseCoords.y}</span><span className="w-20 text-left">{mouseCoords.x}</span></div>
-              <div className="flex items-center gap-1 border-l border-neutral-300 pl-4"><span>Scale:</span><select value={selectedScale} onChange={(e) => handleScaleChange(Number(e.target.value))} className="bg-neutral-200 border-none focus:ring-0 p-0 text-[10px] h-4">{MAP_SCALES.map(s => <option key={s.value} value={s.value}>1:{s.value}</option>)}</select></div>
-          </div>
+          <div className="flex gap-6 items-center"><div className="flex gap-3 font-mono text-neutral-700"><span className="w-20 text-right">{mouseCoords.y}</span><span className="w-20 text-left">{mouseCoords.x}</span></div><div className="flex items-center gap-1 border-l border-neutral-300 pl-4"><span>Scale:</span><select value={selectedScale} onChange={(e) => handleScaleChange(Number(e.target.value))} className="bg-neutral-200 border-none focus:ring-0 p-0 text-[10px] h-4">{MAP_SCALES.map(s => <option key={s.value} value={s.value}>1:{s.value}</option>)}</select></div></div>
           <div className="flex items-center gap-1"><span>Prj:</span><select value={selectedZone} onChange={(e) => setSelectedZone(e.target.value)} className="bg-neutral-200 border-none focus:ring-0 p-0 text-[10px] h-4 font-bold">{ZONES.map(z => <option key={z.code} value={z.code}>{z.label}</option>)}</select></div>
       </div>
     </div>
