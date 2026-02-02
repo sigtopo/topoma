@@ -42,19 +42,19 @@ type ToolType = 'Rectangle' | 'Polygon' | 'Point' | 'Line' | 'Pan' | 'MeasureLen
 
 const BASEMAPS = [
     { id: 'google_sat', label: 'Satellite (Google)', icon: '🛰️' },
-    { id: 'google_hybrid', label: 'Satellite + Labels (Default)', icon: '🛰️📍' },
-    { id: 'google_roads', label: 'Roads (Google)', icon: '🛣️' },
-    { id: 'google_terrain', label: 'Terrain (Google)', icon: '⛰️' },
+    { id: 'google_hybrid', label: 'Satt + Étiquettes ', icon: '🧭' },
+    { id: 'google_roads', label: 'Routes (Google)', icon: '🛣️' }, 
+    { id: 'google_terrain', label: 'Relief (Google)', icon: '⛰️' },
     { id: 'osm_standard', label: 'OSM Standard', icon: '🗺️' },
-    { id: 'osm_hot', label: 'OSM Humanitarian', icon: '🆘' },
-    { id: 'esri_sat', label: 'Aerial Imagery (ESRI)', icon: '🛰️' },
-    { id: 'esri_streets', label: 'Streets (ESRI)', icon: '🛣️' },
-    { id: 'esri_topo', label: 'Topographic (ESRI)', icon: '🗺️' },
-    { id: 'esri_terrain', label: 'Terrain (ESRI)', icon: '⛰️' },
-    { id: 'esri_shaded', label: 'Shaded Relief (ESRI)', icon: '🌋' },
-    { id: 'usgs_topo', label: 'USGS Topographic', icon: '🗺️' },
-    { id: 'opentopo', label: 'OpenTopo Map', icon: '🗺️🌍' },
-    { id: 'morocco_topo', label: 'Morocco Topographic', icon: '🇲🇦' }
+    { id: 'osm_hot', label: 'OSM Humanitaire', icon: '🆘' },
+    { id: 'esri_sat', label: 'Imagerie Aérienne (ESRI)', icon: '🛰️' }, 
+    { id: 'esri_streets', label: 'Rues (ESRI)', icon: '🛣️' },
+    { id: 'esri_topo', label: 'Topographique (ESRI)', icon: '🌐' },
+    { id: 'esri_terrain', label: 'Relief (ESRI)', icon: '⛰️' },
+    { id: 'esri_shaded', label: 'Relief Ombré  (ESRI)', icon: '🌋' }, 
+    { id: 'usgs_topo', label: 'Topographique USGS ', icon: '🗺️' },
+    { id: 'opentopo', label: 'Carte OpenTopo', icon: '🌍' },
+    { id: 'morocco_topo', label: 'Topographic', icon: '🇲🇦' }
 ];
 
 const EXPORT_SCALES = [
@@ -153,7 +153,7 @@ const App: React.FC = () => {
   const [zipBlob, setZipBlob] = useState<Blob | null>(null);
   const [fileName, setFileName] = useState("");
   const [selectedScale, setSelectedScale] = useState<number>(1000);
-  const [basemapId, setBasemapId] = useState<string>('google_hybrid');
+  const [basemapId, setBasemapId] = useState<string>('google_sat');
   const [basemapPanelOpen, setBasemapPanelOpen] = useState(false);
   
   const [measureUnit, setMeasureUnit] = useState<string>('m');
