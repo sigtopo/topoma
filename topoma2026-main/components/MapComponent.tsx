@@ -157,7 +157,7 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
     const isHovered = feature.get('hover') === true;
     const isUser = feature.get('label') === 'Moi';
     
-    // Google Maps style for user location
+    // User location style
     if (isUser && type === 'Point') {
         return new Style({
             image: new Icon({
@@ -168,33 +168,24 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
         });
     }
 
-    // POINT LABELS: Always visible
-    // OTHERS: Visible only on hover
-    let textStyle;
-    if (type === 'Point') {
-        textStyle = new Text({ 
-            text: label, 
-            font: 'bold 12px Roboto, sans-serif', 
-            fill: new Fill({ color: '#ffffff' }), 
-            stroke: new Stroke({ color: '#000000', width: 3 }), 
-            overflow: true, 
-            offsetY: -12, 
-            textBaseline: 'bottom'
-        });
-    } else if (isHovered) {
-        textStyle = new Text({ 
-            text: label, 
-            font: 'bold 14px Roboto, sans-serif', 
-            fill: new Fill({ color: '#ffffff' }), 
-            stroke: new Stroke({ color: '#000000', width: 4 }), 
-            overflow: true, 
-            offsetY: -25, 
-            placement: type === 'LineString' ? 'line' : 'point',
-            textBaseline: 'bottom'
-        });
-    }
+    // LABEL LOGIC:
+    // Point: ALWAYS
+    // Line: ALWAYS
+    // Polygon: HOVER ONLY
+    const showLabel = (type === 'Point' || type === 'LineString' || isHovered);
 
-    // POINT ICON: Small circular dot
+    const textStyle = showLabel ? new Text({ 
+        text: label, 
+        font: 'bold 12px Roboto, sans-serif', 
+        fill: new Fill({ color: (type === 'LineString') ? '#000000' : '#ffffff' }), 
+        stroke: new Stroke({ color: (type === 'LineString') ? '#ffffff' : '#000000', width: 3 }), 
+        overflow: true, 
+        offsetY: type === 'Point' ? -12 : (type === 'LineString' ? 0 : -25), 
+        placement: type === 'LineString' ? 'line' : 'point',
+        textBaseline: type === 'LineString' ? 'middle' : 'bottom'
+    }) : undefined;
+
+    // POINT STYLE: Small circle dot
     if (type === 'Point') {
         return new Style({ 
             image: new CircleStyle({
@@ -206,16 +197,25 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
         });
     }
 
+    // LINE STYLE: Dashed black
+    if (type === 'LineString') {
+        return new Style({
+            stroke: new Stroke({ color: '#000000', width: 3, lineDash: [5, 5] }),
+            text: textStyle
+        });
+    }
+
+    // POLYGON STYLE: Green border, transparent fill
     const styles = [
         new Style({ 
             stroke: new Stroke({ color: '#00FF40', width: 3 }), 
-            fill: new Fill({ color: 'rgba(0, 0, 0, 0)' }), // Transparent fill
+            fill: new Fill({ color: 'rgba(0, 0, 0, 0)' }), 
             text: textStyle 
         })
     ];
 
-    if (type === 'Polygon' || type === 'LineString') {
-        const coords = type === 'Polygon' ? geometry.getCoordinates()[0] : geometry.getCoordinates();
+    if (type === 'Polygon') {
+        const coords = geometry.getCoordinates()[0];
         styles.push(new Style({
             image: new CircleStyle({
                 radius: 4,
@@ -246,14 +246,14 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
       const geometry = feature.getGeometry();
       const type = geometry.getType();
 
-      // KML Points show labels always, others on hover
-      const showLabel = type === 'Point' || isHovered;
+      // Similar logic for imported KML
+      const showLabel = (type === 'Point' || type === 'LineString' || isHovered);
 
       const textStyle = (showLabel && labelText) ? new Text({
           text: labelText,
-          font: type === 'Point' ? 'bold 12px Roboto, sans-serif' : 'bold 12px Roboto, sans-serif',
-          fill: new Fill({ color: type === 'Point' ? '#ffffff' : '#000000' }), 
-          stroke: new Stroke({ color: type === 'Point' ? '#000000' : '#ffffff', width: 4 }),
+          font: 'bold 12px Roboto, sans-serif',
+          fill: new Fill({ color: (type === 'LineString') ? '#000000' : (type === 'Point' ? '#ffffff' : '#000000') }), 
+          stroke: new Stroke({ color: (type === 'LineString' || type === 'Point') ? '#ffffff' : '#ffffff', width: 4 }),
           offsetY: type === 'Point' ? -12 : -15,
           overflow: true,
           textBaseline: 'bottom',
@@ -261,7 +261,11 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
       }) : undefined;
 
       return new Style({
-          stroke: new Stroke({ color: '#ff0000', width: 3 }), 
+          stroke: new Stroke({ 
+              color: type === 'LineString' ? '#000000' : '#ff0000', 
+              width: 3,
+              lineDash: type === 'LineString' ? [5, 5] : undefined
+          }), 
           fill: new Fill({ color: 'rgba(0, 0, 0, 0)' }), 
           text: textStyle,
           image: type === 'Point' ? new CircleStyle({
@@ -299,7 +303,6 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
           });
       }
 
-      // IMPORTED POINTS: small dot, label always visible
       return new Style({ 
           image: new CircleStyle({
               radius: 5,
@@ -703,7 +706,7 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
         const c = toLonLat(e.coordinate); 
         if (onMouseMove) onMouseMove(`${c[0]>=0?'E':'W'}${Math.abs(c[0]).toFixed(4)}`, `${c[1]>=0?'N':'S'}${Math.abs(c[1]).toFixed(4)}`); 
         
-        // Hover logic for non-point labels
+        // Hover logic for labels (only non-always-visible types like Polygon)
         const pixel = e.pixel;
         const feature = map.forEachFeatureAtPixel(pixel, (ft) => ft);
         

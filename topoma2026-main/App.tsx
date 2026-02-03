@@ -558,7 +558,7 @@ const App: React.FC = () => {
                   {showSearchPanel && (
                       <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-xl border border-neutral-300 w-64 z-[110] overflow-hidden">
                           <div className="p-2 border-b bg-neutral-50 flex items-center gap-2"><i className="fas fa-search text-neutral-400 text-xs"></i><input autoFocus type="text" className="w-full bg-transparent text-xs outline-none" placeholder="Rechercher..." value={searchQuery} onChange={handleSearchInput}/></div>
-                          {searchResults.length > 0 ? (<ul className="max-h-60 overflow-y-auto">{searchResults.map((result) => (<li key={result.place_id}><button onClick={() => handleSelectSearchResult(result)} className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 border-b last:border-0 flex flex-col gap-0.5"><span className="font-bold text-neutral-700 truncate">{result.display_name.split(',')[0]}</span><span className="text-[10px] text-neutral-500 truncate">{result.display_name}</span></button></li>))}</ul>) : (searchQuery.length > 2 && <div className="p-3 text-center text-xs text-neutral-400 italic">Aucun نتيجة.</div>)}
+                          {searchResults.length > 0 ? (<ul className="max-h-60 overflow-y-auto">{searchResults.map((result) => (<li key={result.place_id}><button onClick={() => handleSelectSearchResult(result)} className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 border-b last:border-0 flex flex-col gap-0.5"><span className="font-bold text-neutral-700 truncate">{result.display_name.split(',')[0]}</span><span className="text-[10px] text-neutral-500 truncate">{result.display_name}</span></button></li>))}</ul>) : (searchQuery.length > 2 && <div className="p-3 text-center text-xs text-neutral-400 italic">Aucun résultat.</div>)}
                       </div>
                   )}
                </div>
@@ -640,7 +640,7 @@ const App: React.FC = () => {
                               <div className="flex justify-between items-center mb-2 border-b pb-1"><span className="text-xs font-bold flex items-center gap-1.5">Import Excel XY <button onClick={() => setShowExcelHelp(true)} className="text-blue-500 hover:text-blue-700 text-sm"><i className="fas fa-info-circle"></i></button></span><CloseButton onClick={() => setShowExcelPanel(false)} /></div>
                               <div className="space-y-3">
                                   <div><label className="block text-[10px] mb-0.5 text-neutral-500">Projection (Zone)</label><select value={selectedZone} onChange={(e) => setSelectedZone(e.target.value)} className="w-full text-xs border rounded p-1 bg-neutral-50">{ZONES.map(z => <option key={z.code} value={z.code}>{z.label}</option>)}</select></div>
-                                  <div className="border border-dashed border-neutral-300 rounded-lg p-3 text-center bg-neutral-50"><i className="fas fa-folder-open text-blue-500 mb-1"></i><button onClick={() => handleFileClick(excelInputRef)} className="block w-full text-xs text-blue-600 font-bold hover:underline mb-1">Choisir un fichier</button><div className="text-[10px] text-neutral-400 truncate">{selectedExcelFile ? selectedExcelFile.name : "Aucun fichier seleccionado"}</div></div>
+                                  <div className="border border-dashed border-neutral-300 rounded-lg p-3 text-center bg-neutral-50"><i className="fas fa-folder-open text-blue-500 mb-1"></i><button onClick={() => handleFileClick(excelInputRef)} className="block w-full text-xs text-blue-600 font-bold hover:underline mb-1">Choisir un fichier</button><div className="text-[10px] text-neutral-400 truncate">{selectedExcelFile ? selectedExcelFile.name : "Aucun fichier sélectionné"}</div></div>
                                   <button onClick={processExcelFile} disabled={!selectedExcelFile} className={`w-full text-white text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${selectedExcelFile ? 'bg-green-600 hover:bg-green-700 shadow-md' : 'bg-neutral-300 cursor-not-allowed'}`}><i className="fas fa-upload text-[10px]"></i> Charger les points</button>
                               </div>
                           </div>
@@ -648,23 +648,23 @@ const App: React.FC = () => {
                   </div>
                   
                   <div className="flex flex-col gap-1.5 items-end">
-                      <button onClick={() => toggleTool('Point')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Point' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="نقطة"><i className="fas fa-map-marker-alt text-base"></i></button>
-                      <button onClick={() => toggleTool('Line')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Line' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="خط"><i className="fas fa-slash text-base"></i></button>
-                      <button onClick={() => toggleTool('Polygon')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Polygon' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="مضلع"><i className="fas fa-draw-polygon text-base"></i></button>
-                      <button onClick={() => toggleTool('Rectangle')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Rectangle' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="مربع"><i className="far fa-square text-base"></i></button>
-                      <button onClick={() => toggleTool('Edit')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Edit' ? 'bg-orange-500 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="تعديل"><i className="fas fa-pen-to-square text-base"></i></button>
+                      <button onClick={() => toggleTool('Point')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Point' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="Point"><i className="fas fa-map-marker-alt text-base"></i></button>
+                      <button onClick={() => toggleTool('Line')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Line' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="Ligne"><i className="fas fa-slash text-base"></i></button>
+                      <button onClick={() => toggleTool('Polygon')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Polygon' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="Polygone"><i className="fas fa-draw-polygon text-base"></i></button>
+                      <button onClick={() => toggleTool('Rectangle')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Rectangle' ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="Rectangle"><i className="far fa-square text-base"></i></button>
+                      <button onClick={() => toggleTool('Edit')} className={`pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center transition-all ${activeTool === 'Edit' ? 'bg-orange-500 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`} title="Modifier"><i className="fas fa-pen-to-square text-base"></i></button>
                       
                       {manualFeatures.length > 0 && (
                         <button 
                             onClick={handleBulkDownload} 
-                            title="تنزيل العناصر"
+                            title="Télécharger les éléments"
                             className="pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center bg-white text-green-600 hover:bg-green-50 transition-all animate-scale-in"
                         >
                             <i className="fas fa-cloud-download-alt text-base"></i>
                         </button>
                       )}
 
-                      <button onClick={() => mapComponentRef.current?.undo()} className="pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center bg-white text-neutral-700 hover:bg-neutral-50 transition-all active:scale-90" title="تراجع"><i className="fas fa-rotate-left text-base"></i></button>
+                      <button onClick={() => mapComponentRef.current?.undo()} className="pointer-events-auto w-9 h-9 rounded shadow-md border flex items-center justify-center bg-white text-neutral-700 hover:bg-neutral-50 transition-all active:scale-90" title="Annuler"><i className="fas fa-rotate-left text-base"></i></button>
                   </div>
               </div>
 
@@ -694,7 +694,7 @@ const App: React.FC = () => {
                           <div className="absolute top-[-10px] right-[-10px]"><CloseButton onClick={() => setShowExcelHelp(false)} /></div>
                           <div className="bg-neutral-100 px-4 py-2 rounded-t-lg border-b font-bold text-neutral-700 text-sm mb-2 flex items-center gap-2"><i className="fas fa-info-circle text-blue-500"></i> Format de fichier requis (Exemple)</div>
                           <img src="https://ia902900.us.archive.org/14/items/capture-decran-2026-02-01-200134/Capture%20d%27%C3%A9cran%202026-02-01%20200134.png" alt="Format Excel Help" className="w-full h-auto rounded border shadow-inner" />
-                          <div className="mt-3 p-3 bg-blue-50 rounded-lg text-[11px] text-blue-800 italic">* Assurez-وزن que vos colonnes sont nommées 'X' and 'Y' (ou 'Easting'/'Northing').</div>
+                          <div className="mt-3 p-3 bg-blue-50 rounded-lg text-[11px] text-blue-800 italic">* Assurez-vous que vos colonnes sont nommées 'X' and 'Y' (ou 'Easting'/'Northing').</div>
                       </div>
                   </div>
               )}
