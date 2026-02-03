@@ -1,5 +1,5 @@
 <div align="center">
-  <h1 align="center">GeoMapper Pro</h1>
+  <h1 align="center">topoma geotif clip Pro</h1>
   <p align="center">Advanced GIS Mapping & Clipping Tool</p>
 </div>
 
