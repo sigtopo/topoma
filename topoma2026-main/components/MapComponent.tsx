@@ -84,7 +84,13 @@ type PopupContent =
   | { type: 'POINT', label: string, x: number, y: number, z: number | '...', lat: number, lon: number, zone: string, zoneLabel: string }
   | null;
 
-const blueMarkerSvg = `<svg xmlns="http://www.w3.org/2000/svg" height="30" viewBox="0 0 24 24" width="30"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#2563eb" stroke="#ffffff" stroke-width="1"/></svg>`;
+// Google Map User Location Dot (SVG)
+const googleUserDotSvg = `
+<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="20" cy="20" r="15" fill="rgba(66, 133, 244, 0.2)" />
+  <circle cx="20" cy="20" r="8" fill="#FFFFFF" />
+  <circle cx="20" cy="20" r="6" fill="#4285F4" />
+</svg>`;
 
 const getBasemapSource = (id: string) => {
     switch (id) {
@@ -149,25 +155,52 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
     const type = geometry.getType();
     const label = feature.get('label') || '';
     const isHovered = feature.get('hover') === true;
+    const isUser = feature.get('label') === 'Moi';
     
-    // Label shown only on hover
-    const textStyle = isHovered ? new Text({ 
-        text: label, 
-        font: 'bold 14px Roboto, sans-serif', 
-        fill: new Fill({ color: '#ffffff' }), 
-        stroke: new Stroke({ color: '#000000', width: 4 }), 
-        overflow: true, 
-        offsetY: type === 'Point' ? -35 : -25, 
-        placement: type === 'LineString' ? 'line' : 'point',
-        textBaseline: 'bottom'
-    }) : undefined;
+    // Google Maps style for user location
+    if (isUser && type === 'Point') {
+        return new Style({
+            image: new Icon({
+                src: 'data:image/svg+xml;utf8,' + encodeURIComponent(googleUserDotSvg),
+                scale: 1,
+                anchor: [0.5, 0.5]
+            })
+        });
+    }
 
+    // POINT LABELS: Always visible
+    // OTHERS: Visible only on hover
+    let textStyle;
+    if (type === 'Point') {
+        textStyle = new Text({ 
+            text: label, 
+            font: 'bold 12px Roboto, sans-serif', 
+            fill: new Fill({ color: '#ffffff' }), 
+            stroke: new Stroke({ color: '#000000', width: 3 }), 
+            overflow: true, 
+            offsetY: -12, 
+            textBaseline: 'bottom'
+        });
+    } else if (isHovered) {
+        textStyle = new Text({ 
+            text: label, 
+            font: 'bold 14px Roboto, sans-serif', 
+            fill: new Fill({ color: '#ffffff' }), 
+            stroke: new Stroke({ color: '#000000', width: 4 }), 
+            overflow: true, 
+            offsetY: -25, 
+            placement: type === 'LineString' ? 'line' : 'point',
+            textBaseline: 'bottom'
+        });
+    }
+
+    // POINT ICON: Small circular dot
     if (type === 'Point') {
         return new Style({ 
-            image: new Icon({ 
-                src: 'data:image/svg+xml;utf8,' + encodeURIComponent(blueMarkerSvg), 
-                anchor: [0.5, 1], 
-                scale: 1 
+            image: new CircleStyle({
+                radius: 5,
+                fill: new Fill({ color: '#2563eb' }),
+                stroke: new Stroke({ color: '#ffffff', width: 2 })
             }), 
             text: textStyle 
         });
@@ -176,7 +209,7 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
     const styles = [
         new Style({ 
             stroke: new Stroke({ color: '#00FF40', width: 3 }), 
-            fill: new Fill({ color: 'rgba(0, 255, 64, 0)' }), // Fully transparent center
+            fill: new Fill({ color: 'rgba(0, 0, 0, 0)' }), // Transparent fill
             text: textStyle 
         })
     ];
@@ -210,25 +243,29 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
           labelText = feature.get('name');
       }
 
-      const textStyle = (isHovered && labelText) ? new Text({
-          text: labelText,
-          font: 'bold 12px Roboto, sans-serif',
-          fill: new Fill({ color: '#000000' }), 
-          stroke: new Stroke({ color: '#ffffff', width: 4 }),
-          offsetY: -15,
-          overflow: true,
-          placement: feature.getGeometry()?.getType() === 'LineString' ? 'line' : 'point'
-      }) : undefined;
-
       const geometry = feature.getGeometry();
       const type = geometry.getType();
+
+      // KML Points show labels always, others on hover
+      const showLabel = type === 'Point' || isHovered;
+
+      const textStyle = (showLabel && labelText) ? new Text({
+          text: labelText,
+          font: type === 'Point' ? 'bold 12px Roboto, sans-serif' : 'bold 12px Roboto, sans-serif',
+          fill: new Fill({ color: type === 'Point' ? '#ffffff' : '#000000' }), 
+          stroke: new Stroke({ color: type === 'Point' ? '#000000' : '#ffffff', width: 4 }),
+          offsetY: type === 'Point' ? -12 : -15,
+          overflow: true,
+          textBaseline: 'bottom',
+          placement: type === 'LineString' ? 'line' : 'point'
+      }) : undefined;
 
       return new Style({
           stroke: new Stroke({ color: '#ff0000', width: 3 }), 
           fill: new Fill({ color: 'rgba(0, 0, 0, 0)' }), 
           text: textStyle,
           image: type === 'Point' ? new CircleStyle({
-              radius: 7,
+              radius: 5,
               fill: new Fill({ color: '#ff0000' }), 
               stroke: new Stroke({ color: '#ffffff', width: 2 })
           }) : undefined
@@ -236,6 +273,9 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
   };
 
   const selectedStyleFunction = (feature: any) => {
+      const isUser = feature.get('label') === 'Moi';
+      if (isUser) return manualStyleFunction(feature);
+
       if (isDeleteModeRef.current) return new Style({ stroke: new Stroke({ color: '#ef4444', width: 4 }), fill: new Fill({ color: 'rgba(239, 68, 68, 0)' }), image: new CircleStyle({ radius: 7, fill: new Fill({ color: '#ef4444' }), stroke: new Stroke({ color: '#fff', width: 2 }) }) });
       const baseStyles = feature.get('layerId') ? kmlStyleFunction(feature) : manualStyleFunction(feature);
       const styles = Array.isArray(baseStyles) ? baseStyles : [baseStyles];
@@ -246,10 +286,34 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
   const measureStyle = new Style({ fill: new Fill({ color: 'rgba(255, 255, 255, 0)' }), stroke: new Stroke({ color: '#3b82f6', width: 2, lineDash: [10, 10] }), image: new CircleStyle({ radius: 5, stroke: new Stroke({ color: '#3b82f6', width: 2 }), fill: new Fill({ color: '#ffffff' }) }) });
 
   const pointStyle = (feature: any) => {
-      const isHovered = feature.get('hover') === true;
+      const label = feature.get('label') || feature.get('name') || '';
+      const isUser = feature.get('label') === 'Moi';
+      
+      if (isUser) {
+          return new Style({
+              image: new Icon({
+                  src: 'data:image/svg+xml;utf8,' + encodeURIComponent(googleUserDotSvg),
+                  scale: 1,
+                  anchor: [0.5, 0.5]
+              })
+          });
+      }
+
+      // IMPORTED POINTS: small dot, label always visible
       return new Style({ 
-          image: new Icon({ src: 'data:image/svg+xml;utf8,' + encodeURIComponent(blueMarkerSvg), anchor: [0.5, 1], scale: 1 }), 
-          text: isHovered ? new Text({ text: feature.get('label') || '', offsetY: -30, font: 'bold 12px Roboto, sans-serif', fill: new Fill({ color: '#ffffff' }), stroke: new Stroke({ color: '#000000', width: 3 }) }) : undefined
+          image: new CircleStyle({
+              radius: 5,
+              fill: new Fill({ color: '#2563eb' }),
+              stroke: new Stroke({ color: '#ffffff', width: 2 })
+          }), 
+          text: new Text({ 
+              text: label, 
+              offsetY: -12, 
+              font: 'bold 12px Roboto, sans-serif', 
+              fill: new Fill({ color: '#ffffff' }), 
+              stroke: new Stroke({ color: '#000000', width: 3 }),
+              textBaseline: 'bottom'
+          })
       });
   };
 
@@ -400,6 +464,11 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
         navigator.geolocation.getCurrentPosition((pos) => {
             const coords = fromLonLat([pos.coords.longitude, pos.coords.latitude]);
             mapRef.current?.getView().animate({ center: coords, zoom: 18 });
+            
+            // Clean old user positions
+            const oldUser = pointsSourceRef.current.getFeatures().find(f => f.get('label') === 'Moi');
+            if (oldUser) pointsSourceRef.current.removeFeature(oldUser);
+
             const f = new Feature({ geometry: new Point(coords), label: 'Moi' });
             pointsSourceRef.current.addFeature(f);
             showPointPopup(f, coords);
@@ -634,7 +703,7 @@ const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onSelecti
         const c = toLonLat(e.coordinate); 
         if (onMouseMove) onMouseMove(`${c[0]>=0?'E':'W'}${Math.abs(c[0]).toFixed(4)}`, `${c[1]>=0?'N':'S'}${Math.abs(c[1]).toFixed(4)}`); 
         
-        // Hover logic for labels
+        // Hover logic for non-point labels
         const pixel = e.pixel;
         const feature = map.forEachFeatureAtPixel(pixel, (ft) => ft);
         
