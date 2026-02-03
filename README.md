@@ -5,7 +5,7 @@
 
 ## Overview
 
-GeoMapper Pro is a specialized web application designed for Geographic Information Systems (GIS) tasks. It allows users to view high-resolution satellite imagery, define areas of interest using drawing tools or KML uploads, and export georeferenced map data.
+topoma is a specialized web application designed for Geographic Information Systems (GIS) tasks. It allows users to view high-resolution satellite imagery, define areas of interest using drawing tools or KML uploads, and export georeferenced map data.
 
 ## Features
 
