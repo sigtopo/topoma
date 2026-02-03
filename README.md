@@ -1,20 +1,28 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+  <h1 align="center">GeoMapper Pro</h1>
+  <p align="center">Advanced GIS Mapping & Clipping Tool</p>
 </div>
 
-# Run and deploy your AI Studio app
+## Overview
 
-This contains everything you need to run your app locally.
+GeoMapper Pro is a specialized web application designed for Geographic Information Systems (GIS) tasks. It allows users to view high-resolution satellite imagery, define areas of interest using drawing tools or KML uploads, and export georeferenced map data.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1NTArPJ50GKkzt6qrAz0OTKd0zkf8VJlS
+## Features
+
+- **Satellite & Hybrid Maps**: High-quality Google Maps imagery integration.
+- **Drawing Tools**: Draw rectangles or freehand polygons to define boundaries.
+- **KML Support**: Upload KML files to automatically locate and select areas.
+- **GeoTIFF Export**: Generate georeferenced TIFF images with `.tfw` (World File) and `.prj` (Projection) files ready for GIS software (ArcGIS, QGIS).
+- **Custom Scaling**: Export maps at specific scales (e.g., 1:500 to 1:250,000) with automatic resolution calculation.
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
-
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+
+2. Run the app:
+   ```bash
+   npm run dev
+   ```
