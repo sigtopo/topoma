@@ -1,3 +1,16 @@
+import React, { useEffect } from "react";
+
+function App() {
+  useEffect(() => {
+    // هذا الكود يظهر نافذة منبثقة عند تحميل التطبيق
+    alert("مرحبا بكم!");
+  }, []);
+
+  return (
+    <div>
+
+export default App;
+
 
 import React, { useState, useRef, useEffect } from 'react';
 import MapComponent, { MapComponentRef } from './components/MapComponent';
