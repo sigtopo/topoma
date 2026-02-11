@@ -100,7 +100,7 @@ const MAP_SCALES = [
 ];
 
 const ZONES = [
-  { code: 'EPSG:4326', label: 'WGS 84' },
+  { code: 'EPSG:4326', label: 'WGS 84 (DEGREE)' },
   { code: 'EPSG:26191', label: 'Zone 1 (Nord Maroc)' },
   { code: 'EPSG:26192', label: 'Zone 2 (Sud Maroc)' },
   { code: 'EPSG:26194', label: 'Zone 3 (Sahara Nord)' },
