@@ -582,7 +582,7 @@ const App: React.FC = () => {
                   <div className="flex-grow overflow-y-auto p-3 bg-neutral-50">
                       <div className="grid grid-cols-4 gap-2 mb-4">
                           <button onClick={() => handleFileClick(kmlInputRef)} title="KML/KMZ" className="flex flex-col items-center justify-center p-2 bg-white border border-neutral-200 rounded shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-all group overflow-hidden">
-                              <img src="https://ia601305.us.archive.org/13/items/chat-gpt-image-feb-3-2026-02-44-58-am-1/ChatGPT%20Image%20Feb%203%2C%202026%2C%2002_44_58%20AM%20%281%29.ico" alt="KMZ" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
+                              <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjK-eWrFVDpTWt-e1zL9aQ3NjmIxcHCMqR5Z1QKeoP-p0_7tuj9HmkUkeO4-AZED594w-D4T7EUm-I-4JWtatoT_8qhXwpJ7bFGK7MmN4TAc87pHwxqGjEbFeGT9ezNbno0f9EMFZedSlj8XkA_KGSgKwdnK-73Ba-l0HNKPXNcFYm5FQ_DIkP1J-UNY7tw/s1600/KML.png" alt="KMZ" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
                               <span className="text-[9px] font-bold text-neutral-500 mt-1">KML/KMZ</span>
                           </button>
                           <button onClick={() => handleFileClick(shpInputRef)} title="Shapefile" className="flex flex-col items-center justify-center p-2 bg-white border border-neutral-200 rounded shadow-sm hover:bg-green-50 hover:border-green-300 transition-all group overflow-hidden">
